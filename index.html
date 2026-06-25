@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Visual Prompt Composer Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0F1117;
+            --bg-secondary: #181C25;
+            --bg-tertiary: #21262D;
+            --accent: #5B8CFF;
+            --accent-hover: #7BA3FF;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8B949E;
+            --border: #30363D;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 60px 1fr 40px;
+            height: 100vh;
+        }
+        header {
+            grid-column: 1 / -1;
+            background: rgba(24, 28, 37, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            gap: 24px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .project-name {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .header-middle select {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        .header-right { display: flex; gap: 8px; }
+        aside {
+            grid-column: 1;
+            grid-row: 2;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+        }
+        .sidebar-search {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .module-item {
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .module-item:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+        }
+        .module-item.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+        }
+        .workspace {
+            grid-column: 2;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            background: var(--bg-primary);
+        }
+        .editor-area {
+            overflow-y: auto;
+            padding: 24px;
+            border-right: 1px solid var(--border);
+        }
+        .preview-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .module-panel { display: none; }
+        .module-panel.active { display: block; }
+        .panel-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .panel-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        select, input[type="text"], textarea, input[type="number"], input[type="color"] {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: inherit;
+        }
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.1);
+        }
+        textarea { resize: vertical; min-height: 70px; font-family: monospace; }
+        .preview-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        .preview-section {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+        .preview-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .preview-text {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .prompt-output {
+            background: var(--bg-primary);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 10px;
+            line-height: 1.4;
+            color: var(--accent);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 8px 12px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover { background: var(--accent-hover); }
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+        footer {
+            grid-column: 1 / -1;
+            background: rgba(24, 28, 37, 0.95);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        .divider { height: 1px; background: var(--border); margin: 12px 0; }
+        @media (max-width: 1200px) {
+            .workspace { grid-template-columns: 1fr; }
+            .preview-panel { display: none; }
+        }
+        @media (max-width: 768px) {
+            .app-container { grid-template-columns: 1fr; }
+            aside { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-left">
+                <div class="logo">✨ AICP Pro</div>
+                <div class="project-name" id="projectName">Untitled</div>
+            </div>
+            <div class="header-middle">
+                <select id="aiModel">
+                    <option>Midjourney</option>
+                    <option>Stable Diffusion</option>
+                    <option>DALL-E</option>
+                    <option>Flux</option>
+                    <option>Kling</option>
+                    <option>Runway</option>
+                    <option>Pika</option>
+                </select>
+            </div>
+            <div class="header-right">
+                <button class="secondary" onclick="app.showHistory()">📜</button>
+                <button class="secondary" onclick="app.exportProject()">💾</button>
+                <button class="secondary" onclick="app.importProject()">📂</button>
+                <button class="secondary" onclick="app.showSettings()">⚙️</button>
+            </div>
+        </header>
+
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <input type="text" class="sidebar-search" id="search" placeholder="Search...">
+            </div>
+            <div class="sidebar-content" id="moduleList"></div>
+        </aside>
+
+        <div class="workspace">
+            <div class="editor-area" id="editor"></div>
+            <div class="preview-panel">
+                <div class="preview-header">📋 Preview</div>
+                <div class="preview-content">
+                    <div class="preview-section">
+                        <div class="preview-section-title">Final Prompt</div>
+                        <div class="prompt-output" id="promptOut">Start composing...</div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-section-title">Components</div>
+                        <div id="componentOut" style="font-size: 11px; line-height: 1.5;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <span id="status">Ready</span>
+            <button onclick="app.generate()">🚀 Generate</button>
+        </footer>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>⚙️ Settings</span>
+                <button class="modal-close" onclick="app.closeModal('settingsModal')">×</button>
+            </div>
+            <input type="text" id="projectInput" placeholder="Project name" style="width: 100%; padding: 8px; margin-bottom: 12px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);">
+            <button onclick="app.saveSettings()" style="width: 100%;">Save</button>
+        </div>
+    </div>
+
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📜 History</span>
+                <button class="modal-close" onclick="app.closeModal('historyModal')">×</button>
+            </div>
+            <div id="historyOut" style="font-size: 12px; line-height: 1.6;"></div>
+        </div>
+    </div>
+
+    <script>
+        const modules = [
+            { id: 'style', num: '01', name: 'Style', icon: '🎨', desc: 'Visual language & aesthetics', fields: { mainStyle: ['Cinematic', 'Editorial', 'Commercial', 'Documentary', 'Lifestyle', 'Portrait', 'Fashion', 'Product', 'Architecture', 'Fine Art'], photoStyle: ['Professional', 'Artistic', 'Candid', 'Film', 'Digital'], artist: ['Wong Kar Wai', 'Roger Deakins', 'Emmanuel Lubezski', 'Gregory Crewdson'], filmStock: ['Kodak Vision3', 'Kodak Portra', 'Fuji Velvia', 'Cinestill', 'Digital'] } },
+            { id: 'story', num: '02', name: 'Story', icon: '📖', desc: 'Narrative & context', fields: { scene: ['Street', 'Office', 'Bedroom', 'Forest', 'Beach', 'Temple', 'Cafe', 'Restaurant', 'Airport'], era: ['Ancient', 'Medieval', 'Victorian', 'Modern', 'Futuristic'], season: ['Spring', 'Summer', 'Autumn', 'Winter'], narrative: ['Slice of Life', 'Drama', 'Comedy', 'Romance', 'Adventure'] } },
+            { id: 'subject', num: '03', name: 'Subject', icon: '👤', desc: 'Main subject', fields: { type: ['Human', 'Animal', 'Vehicle', 'Architecture', 'Product', 'Landscape'], gender: ['Male', 'Female', 'Diverse'], age: ['Child', 'Teen', 'Adult', 'Senior'], expression: ['Neutral', 'Happy', 'Sad', 'Serious', 'Thoughtful'], pose: ['Standing', 'Walking', 'Sitting', 'Running', 'Lying'] } },
+            { id: 'environment', num: '04', name: 'Environment', icon: '🌍', desc: 'Surroundings', fields: { type: ['Indoor', 'Outdoor', 'Urban', 'Rural', 'Natural', 'Industrial'], bg: ['Blurred', 'Detailed', 'Minimal', 'Clean'], scale: ['Macro', 'Close-up', 'Medium', 'Wide'] } },
+            { id: 'emotion', num: '05', name: 'Emotion', icon: '💫', desc: 'Emotional tone', fields: { mood: ['Joyful', 'Peaceful', 'Intense', 'Melancholic', 'Dramatic'], tone: ['Warm', 'Cool', 'Vibrant', 'Muted'], energy: ['Low', 'Medium', 'High'] } },
+            { id: 'weather', num: '06', name: 'Weather', icon: '🌤️', desc: 'Atmospheric', fields: { weather: ['Clear', 'Cloudy', 'Rainy', 'Snowy', 'Foggy'], time: ['Dawn', 'Morning', 'Afternoon', 'Golden Hour', 'Night'] } },
+            { id: 'lighting', num: '07', name: 'Lighting', icon: '💡', desc: 'Light setup', fields: { type: ['Natural', 'Studio', 'Cinematic', 'Neon'], direction: ['Front', 'Side', 'Back', 'Top'], intensity: ['Dim', 'Soft', 'Normal', 'Bright'], shadows: ['Sharp', 'Soft', 'None'] } },
+            { id: 'camera', num: '08', name: 'Camera', icon: '📷', desc: 'Camera params', fields: { type: ['Canon 5D', 'Sony A7', 'Hasselblad', 'Film'], lens: ['14mm', '35mm', '50mm', '85mm', '135mm'], aperture: ['f/1.4', 'f/2.8', 'f/5.6', 'f/8'], shutter: ['1/1000', '1/250', '1/60', 'Long Exposure'] } },
+            { id: 'composition', num: '09', name: 'Composition', icon: '⬜', desc: 'Visual structure', fields: { rule: ['Rule of Thirds', 'Golden Ratio', 'Leading Lines', 'Symmetry'], framing: ['Centered', 'Left', 'Right', 'Layered'], perspective: ['Eye Level', 'Low Angle', 'High Angle'] } },
+            { id: 'depth', num: '10', name: 'Depth', icon: '3️⃣', desc: 'Depth & layers', fields: { dof: ['Shallow', 'Medium', 'Deep', 'Infinite'], layers: ['Foreground', 'Mid', 'Background'], focus: ['Subject', 'Background', 'Split'] } },
+            { id: 'motion', num: '11', name: 'Motion', icon: '🎬', desc: 'Movement', fields: { type: ['Static', 'Slow', 'Normal', 'Fast', 'Dynamic'], direction: ['Left', 'Right', 'Forward', 'Circular'], blur: ['None', 'Subtle', 'Moderate'] } },
+            { id: 'color', num: '12', name: 'Color', icon: '🌈', desc: 'Color scheme', fields: { palette: ['Vibrant', 'Pastel', 'Monochrome', 'High Contrast'], grading: ['Teal & Orange', 'Warm', 'Cool', 'Vintage'] } },
+            { id: 'texture', num: '13', name: 'Texture', icon: '📓', desc: 'Surfaces', fields: { texture: ['Smooth', 'Rough', 'Grainy', 'Glossy', 'Matte', 'Metallic'] } },
+            { id: 'quality', num: '14', name: 'Quality', icon: '⭐', desc: 'Output quality', fields: { level: ['Standard', 'High', '4K', '8K'], detail: ['Low', 'Medium', 'High', 'Ultra'] } },
+            { id: 'video', num: '15', name: 'Video', icon: '🎥', desc: 'Video params', fields: { duration: ['5s', '10s', '15s', '30s'], fps: ['24fps', '30fps', '60fps'] } },
+            { id: 'negative', num: '16', name: 'Negative', icon: '🚫', desc: 'Exclude elements', fields: {} },
+            { id: 'advanced', num: '17', name: 'Advanced', icon: '⚡', desc: 'Fine-tuning', fields: {} },
+            { id: 'output', num: '18', name: 'Output', icon: '📤', desc: 'Export settings', fields: { format: ['PNG', 'JPG', 'WEBP', 'MP4'] } },
+            { id: 'references', num: '19', name: 'References', icon: '🖼️', desc: 'Reference images', fields: {} },
+            { id: 'library', num: '20', name: 'Library', icon: '📚', desc: 'Prompt library', fields: {} },
+            { id: 'history', num: '21', name: 'History', icon: '⏱️', desc: 'Access history', fields: {} },
+            { id: 'templates', num: '22', name: 'Templates', icon: '⭐', desc: 'Quick templates', fields: {} },
+            { id: 'ai', num: '23', name: 'AI Assistant', icon: '🤖', desc: 'AI enhancement', fields: {} }
+        ];
+
+        class App {
+            constructor() {
+                this.data = {};
+                this.history = [];
+                this.current = 'style';
+                this.init();
+            }
+
+            init() {
+                this.load();
+                this.render();
+                this.attach();
+            }
+
+            load() {
+                const stored = localStorage.getItem('aiComposer');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    this.data = parsed.data || {};
+                    this.history = parsed.history || [];
+                }
+            }
+
+            save() {
+                localStorage.setItem('aiComposer', JSON.stringify({
+                    data: this.data,
+                    history: this.history
+                }));
+            }
+
+            render() {
+                this.renderSidebar();
+                this.renderEditor();
+                this.updatePreview();
+            }
+
+            renderSidebar() {
+                const html = modules.map(m => `<div class="module-item ${m.id === this.current ? 'active' : ''}" onclick="app.switch('${m.id}')">${m.num} ${m.icon} ${m.name}</div>`).join('');
+                document.getElementById('moduleList').innerHTML = html;
+            }
+
+            renderEditor() {
+                const m = modules.find(x => x.id === this.current);
+                let html = `<div class="panel-title">${m.icon} ${m.name}</div><div class="panel-description">${m.desc}</div>`;
+                
+                for (const [key, opts] of Object.entries(m.fields)) {
+                    const id = `${m.id}-${key}`;
+                    const val = this.data[id] || '';
+                    
+                    if (Array.isArray(opts)) {
+                        html += `<div class="form-group"><label class="form-label">${key}</label><select id="${id}" onchange="app.update('${id}')"><option></option>${opts.map(o => `<option ${val === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;
+                    }
+                }
+
+                if (m.id === 'negative' || m.id === 'advanced' || m.id === 'ai') {
+                    const id = `${m.id}-custom`;
+                    const val = this.data[id] || '';
+                    html += `<div class="form-group"><label class="form-label">Custom Text</label><textarea id="${id}" onchange="app.update('${id}')">${val}</textarea></div>`;
+                }
+
+                document.getElementById('editor').innerHTML = html;
+            }
+
+            switch(id) {
+                this.current = id;
+                this.render();
+            }
+
+            update(id) {
+                const el = document.getElementById(id);
+                this.data[id] = el.value;
+                this.updatePreview();
+                this.save();
+            }
+
+            updatePreview() {
+                const order = ['style', 'story', 'subject', 'environment', 'emotion', 'weather', 'lighting', 'camera', 'composition', 'depth', 'motion', 'color', 'texture', 'quality', 'video', 'negative', 'advanced', 'output'];
+                
+                const parts = [];
+                for (const mid of order) {
+                    for (const [k, v] of Object.entries(this.data)) {
+                        if (k.startsWith(mid + '-') && v) parts.push(v);
+                    }
+                }
+
+                const unique = [...new Set(parts)];
+                const prompt = unique.join(', ') + (unique.length ? '.' : '');
+                document.getElementById('promptOut').textContent = prompt || 'Add values to generate...';
+
+                const comp = unique.slice(0, 5).map(v => `<div style="color: var(--text-secondary);">• ${v}</div>`).join('');
+                document.getElementById('componentOut').innerHTML = comp || '<div style="color: var(--text-secondary);">No components</div>';
+            }
+
+            generate() {
+                const prompt = document.getElementById('promptOut').textContent;
+                if (prompt && prompt !== 'Add values to generate...') {
+                    this.history.push({ time: new Date().toLocaleString(), prompt });
+                    this.save();
+                    this.updateStatus('✓ Prompt added to history');
+                }
+            }
+
+            exportProject() {
+                const json = JSON.stringify({ data: this.data, history: this.history }, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `prompt-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.updateStatus('✓ Exported');
+            }
+
+            importProject() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = evt => {
+                        try {
+                            const parsed = JSON.parse(evt.target.result);
+                            this.data = parsed.data || {};
+                            this.history = parsed.history || [];
+                            this.render();
+                            this.save();
+                            this.updateStatus('✓ Imported');
+                        } catch (err) {
+                            this.updateStatus('✗ Import failed');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            showSettings() {
+                document.getElementById('projectInput').value = document.getElementById('projectName').textContent;
+                this.openModal('settingsModal');
+            }
+
+            saveSettings() {
+                const name = document.getElementById('projectInput').value || 'Untitled';
+                document.getElementById('projectName').textContent = name;
+                this.closeModal('settingsModal');
+                this.updateStatus('✓ Settings saved');
+                this.save();
+            }
+
+            showHistory() {
+                const html = this.history.length ? this.history.map((h, i) => `<div style="margin-bottom: 12px; padding: 10px; background: var(--bg-tertiary); border-radius: 4px;"><strong>#${this.history.length - i}</strong> ${h.time}<br><small>${h.prompt}</small></div>`).join('') : '<div style="color: var(--text-secondary);">No history</div>';
+                document.getElementById('historyOut').innerHTML = html;
+                this.openModal('historyModal');
+            }
+
+            openModal(id) {
+                document.getElementById(id).classList.add('active');
+            }
+
+            closeModal(id) {
+                document.getElementById(id).classList.remove('active');
+            }
+
+            updateStatus(msg) {
+                const el = document.getElementById('status');
+                el.textContent = msg;
+                setTimeout(() => el.textContent = 'Ready', 2000);
+            }
+
+            attach() {
+                document.getElementById('search').addEventListener('input', e => {
+                    const q = e.target.value.toLowerCase();
+                    document.querySelectorAll('.module-item').forEach(el => {
+                        el.style.display = el.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+                    });
+                });
+            }
+        }
+
+        const app = new App();
+    </script>
+</body>
+</html>
